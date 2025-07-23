@@ -1,0 +1,97 @@
+import express from 'express';
+import {
+  createEvent,
+  rsvpEvent,
+  getEvents,
+  getAttendees,
+} from '../controllers/event.controller';
+import { protect } from '../middleware/auth';
+
+const router = express.Router();
+
+/**
+ * @swagger
+ * tags:
+ *   name: Events
+ *   description: Event management endpoints
+ */
+
+/**
+ * @swagger
+ * /api/events:
+ *   get:
+ *     summary: Get all events
+ *     tags: [Events]
+ *     responses:
+ *       200:
+ *         description: A list of events
+ */
+router.get('/', getEvents);
+
+/**
+ * @swagger
+ * /api/events:
+ *   post:
+ *     summary: Create a new event
+ *     tags: [Events]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *               maxAttendees:
+ *                 type: number
+ *     responses:
+ *       201:
+ *         description: Event created
+ */
+router.post('/', createEvent);
+
+/**
+ * @swagger
+ * /api/events/{id}/rsvp:
+ *   post:
+ *     summary: RSVP to an event
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: RSVP successful
+ */
+router.post('/:id/rsvp', protect, rsvpEvent);
+
+/**
+ * @swagger
+ * /api/events/{id}/attendees:
+ *   get:
+ *     summary: Get attendees of an event
+ *     tags: [Events]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of attendees
+ */
+router.get('/:id/attendees', getAttendees);
+
+export default router;
