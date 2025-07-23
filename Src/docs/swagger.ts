@@ -1,5 +1,6 @@
 import { OpenAPIV3 } from 'openapi-types';
 const swaggerJSDoc = require('swagger-jsdoc');
+const isProd = process.env.NODE_ENV === 'production';
 
 const swaggerOptions = {
   definition: {
@@ -11,7 +12,10 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'https://event-rsvp-backend-d0s8.onrender.com/',
+       url:
+        process.env.NODE_ENV === 'production'
+          ? 'https://event-rsvp-backend-d0s8.onrender.com/'
+          : 'http://localhost:5000/',
       },
     ],
     components: {
@@ -25,8 +29,7 @@ const swaggerOptions = {
     },
     security: [{ bearerAuth: [] }],
   } as unknown as OpenAPIV3.Document,
-  //apis: ['./src/routes/*.ts'],
-  apis: ['./dist/routes/*.js'],
+   apis: [isProd ? './dist/routes/*.js' : './src/routes/*.ts'],
 };
 
 const swaggerSpec = swaggerJSDoc(swaggerOptions);
