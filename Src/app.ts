@@ -10,7 +10,10 @@ import authRoutes from './routes/auth.routes';
 connectDB();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173', // or '*' for dev
+  credentials: true, 
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
