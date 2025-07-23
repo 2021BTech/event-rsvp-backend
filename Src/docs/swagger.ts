@@ -25,7 +25,8 @@ const swaggerOptions = {
     },
     security: [{ bearerAuth: [] }],
   } as unknown as OpenAPIV3.Document,
-  apis: ['./src/routes/*.ts'],
+  //apis: ['./src/routes/*.ts'],
+  apis: ['./dist/routes/*.js'],
 };
 
 const swaggerSpec = swaggerJSDoc(swaggerOptions);
