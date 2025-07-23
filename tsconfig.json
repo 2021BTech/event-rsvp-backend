@@ -11,6 +11,6 @@
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "resolveJsonModule": true
   },
-  "include": ["src/**/*"],
+  "include": ["Src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
