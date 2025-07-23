@@ -11,7 +11,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'http://localhost:5000',
+        url: 'https://event-rsvp-backend-d0s8.onrender.com/',
       },
     ],
     components: {
@@ -24,9 +24,8 @@ const swaggerOptions = {
       },
     },
     security: [{ bearerAuth: [] }],
-    paths: {}, 
-  } as OpenAPIV3.Document,
-  apis: ['./src/routes/*.ts'], 
+  } as unknown as OpenAPIV3.Document,
+  apis: ['./src/routes/*.ts'],
 };
 
 const swaggerSpec = swaggerJSDoc(swaggerOptions);
