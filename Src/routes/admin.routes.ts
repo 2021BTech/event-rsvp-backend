@@ -1,5 +1,6 @@
 import express from 'express';
 import {
+  deleteEvent,
   deleteUser,
   getAllEventsWithRSVPs,
   getAllUsers,
@@ -64,5 +65,28 @@ router.delete('/users/:id', deleteUser);
  *         description: List of events with RSVP details
  */
 router.get('/events', getAllEventsWithRSVPs);
+
+/**
+ * @swagger
+ * /api/admin/events/{id}:
+ *   delete:
+ *     summary: Delete an event by ID (Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Event deleted successfully
+ *       404:
+ *         description: Event not found
+ */
+router.delete('/events/:id', deleteEvent);
+
 
 export default router;

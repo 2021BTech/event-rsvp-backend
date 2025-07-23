@@ -6,7 +6,27 @@ import { AuthRequest } from '../middleware/auth';
 // Create a new event
 export const createEvent = async (req: Request, res: Response) => {
   try {
-    const event = await Event.create(req.body);
+    const { title, description, date, maxAttendees, image } = req.body;
+
+    if (image) {
+      if (!isValidBase64Image(image)) {
+        return res.status(400).json({ message: 'Invalid base64 image format' });
+      }
+
+      const sizeKB = getBase64SizeKB(image);
+      if (sizeKB > 500) {
+        return res.status(400).json({ message: 'Image too large (max 500KB allowed)' });
+      }
+    }
+
+    const event = await Event.create({
+      title,
+      description,
+      date,
+      maxAttendees,
+      image,
+    });
+
     res.status(200).json(event);
   } catch (error: unknown) {
     if (error instanceof Error) {
@@ -16,6 +36,45 @@ export const createEvent = async (req: Request, res: Response) => {
     }
   }
 };
+
+// Update (edit) an existing event
+export const editEvent = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { title, description, date, maxAttendees, image } = req.body;
+
+  try {
+    const event = await Event.findById(id);
+    if (!event) return res.status(404).json({ message: 'Event not found' });
+
+    // Validate base64 image if provided
+    if (image) {
+      if (!isValidBase64Image(image)) {
+        return res.status(400).json({ message: 'Invalid base64 image format' });
+      }
+
+      const sizeKB = getBase64SizeKB(image);
+      if (sizeKB > 500) {
+        return res.status(400).json({ message: 'Image too large (max 500KB allowed)' });
+      }
+
+      event.image = image;
+    }
+
+    if (title !== undefined) event.title = title;
+    if (description !== undefined) event.description = description;
+    if (date !== undefined) event.date = date;
+    if (maxAttendees !== undefined) event.maxAttendees = maxAttendees;
+
+    await event.save();
+
+    res.status(200).json({ message: 'Event updated successfully', event });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update event' });
+  }
+};
+
+
+
 
 // Get all events
 export const getEvents = async (req: Request, res: Response) => {
@@ -42,6 +101,8 @@ export const getEvents = async (req: Request, res: Response) => {
 
 // RSVP to an event
 import User from '../models/user.model';
+import { isValidBase64Image } from '../utils/validate';
+import { getBase64SizeKB } from '../utils/resize';
 
 export const rsvpEvent = async (req: AuthRequest, res: Response) => {
   const { id } = req.params;

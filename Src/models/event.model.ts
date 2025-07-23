@@ -7,6 +7,7 @@ export interface IEvent extends Document {
   date: Date;
   maxAttendees: number;
   attendees: Attendee[];
+  image?: string;
 }
 
 const attendeeSchema = new Schema<Attendee>({
@@ -21,6 +22,7 @@ const eventSchema = new Schema<IEvent>({
   date: { type: Date, required: true },
   maxAttendees: Number,
   attendees: [attendeeSchema],
+  image: String,
 });
 
 export default mongoose.model<IEvent>('Event', eventSchema);

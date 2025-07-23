@@ -4,6 +4,7 @@ import {
   rsvpEvent,
   getEvents,
   getAttendees,
+  editEvent,
 } from '../controllers/event.controller';
 import { protect } from '../middleware/auth';
 
@@ -50,11 +51,50 @@ router.get('/', getEvents);
  *                 format: date-time
  *               maxAttendees:
  *                 type: number
+ *               image:
+ *                 type: string
+ *                 description: Base64 encoded image (data:image/jpeg;base64,...)
  *     responses:
  *       201:
  *         description: Event created
  */
 router.post('/', createEvent);
+
+/**
+ * @swagger
+ * /api/events/{id}:
+ *   put:
+ *     summary: Edit an event
+ *     tags: [Events]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *               maxAttendees:
+ *                 type: number
+ *               image:
+ *                 type: string
+ *                 description: Base64 encoded image (data:image/jpeg;base64,...)
+ *     responses:
+ *       200:
+ *         description: Event updated successfully
+ */
+router.put('/:id', editEvent);
 
 /**
  * @swagger
