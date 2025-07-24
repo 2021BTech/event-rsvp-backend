@@ -6,25 +6,16 @@ import { AuthRequest } from '../middleware/auth';
 // Create a new event
 export const createEvent = async (req: Request, res: Response) => {
   try {
-    const { title, description, date, maxAttendees, image } = req.body;
+    const { title, description, date, maxAttendees } = req.body;
 
-    if (image) {
-      if (!isValidBase64Image(image)) {
-        return res.status(400).json({ message: 'Invalid base64 image format' });
-      }
-
-      const sizeKB = getBase64SizeKB(image);
-      if (sizeKB > 500) {
-        return res.status(400).json({ message: 'Image too large (max 500KB allowed)' });
-      }
-    }
+    const imageUrl = (req.file as any)?.path;
 
     const event = await Event.create({
       title,
       description,
       date,
       maxAttendees,
-      image,
+      image: imageUrl,
     });
 
     res.status(200).json(event);
@@ -32,46 +23,42 @@ export const createEvent = async (req: Request, res: Response) => {
     if (error instanceof Error) {
       res.status(400).json({ message: error.message });
     } else {
-      res.status(400).json({ message: 'Unknown error occurred' });
+      res.status(400).json({ message: "Unknown error occurred" });
     }
   }
 };
 
+
 // Update (edit) an existing event
 export const editEvent = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { title, description, date, maxAttendees, image } = req.body;
+  const { title, description, date, maxAttendees } = req.body;
 
   try {
     const event = await Event.findById(id);
     if (!event) return res.status(404).json({ message: 'Event not found' });
 
-    // Validate base64 image if provided
-    if (image) {
-      if (!isValidBase64Image(image)) {
-        return res.status(400).json({ message: 'Invalid base64 image format' });
-      }
-
-      const sizeKB = getBase64SizeKB(image);
-      if (sizeKB > 500) {
-        return res.status(400).json({ message: 'Image too large (max 500KB allowed)' });
-      }
-
-      event.image = image;
-    }
-
+    // Update fields
     if (title !== undefined) event.title = title;
     if (description !== undefined) event.description = description;
     if (date !== undefined) event.date = date;
     if (maxAttendees !== undefined) event.maxAttendees = maxAttendees;
 
+    // Update image if a new one was uploaded
+    if (req.file) {
+      const imageUrl = (req.file as any).path;
+      event.image = imageUrl;
+    }
+
     await event.save();
 
     res.status(200).json({ message: 'Event updated successfully', event });
   } catch (error) {
+    console.error("Update error:", error);
     res.status(500).json({ message: 'Failed to update event' });
   }
 };
+
 
 // Get event by ID
 export const getEventById = async (req: Request, res: Response) => {
