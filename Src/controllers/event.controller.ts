@@ -73,6 +73,21 @@ export const editEvent = async (req: Request, res: Response) => {
   }
 };
 
+// Get event by ID
+export const getEventById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const event = await Event.findById(id);
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    res.status(200).json(event);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch event" });
+  }
+};
 
 
 

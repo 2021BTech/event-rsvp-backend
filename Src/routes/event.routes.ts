@@ -5,6 +5,7 @@ import {
   getEvents,
   getAttendees,
   editEvent,
+  getEventById,
 } from '../controllers/event.controller';
 import { protect } from '../middleware/auth';
 
@@ -133,5 +134,26 @@ router.post('/:id/rsvp', protect, rsvpEvent);
  *         description: List of attendees
  */
 router.get('/:id/attendees', getAttendees);
+
+// Get a single event by ID
+/**
+ * @swagger
+ * /api/events/{id}:
+ *   get:
+ *     summary: Get a single event by ID
+ *     tags: [Events]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Event details
+ *       404:
+ *         description: Event not found
+ */
+router.get('/:id', getEventById);
 
 export default router;
