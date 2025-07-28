@@ -1,19 +1,24 @@
 import { Request, Response } from 'express';
 import Event from '../models/event.model';
+import User from '../models/user.model';
 import { AuthRequest } from '../middleware/auth';
 
 
 // Create a new event
 export const createEvent = async (req: Request, res: Response) => {
   try {
-
     const { title, description, date, maxAttendees } = req.body;
 
-    if (!title || !description || !date || !maxAttendees) {
+    if (!title || !description || !date || !maxAttendees || !req.body.location) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-   const imageUrl = (req.file as any)?.path || null;
+    const imageUrl = (req.file as any)?.path || null;
+
+    // Parse location (JSON string if sent as form-data stringified)
+    const location = typeof req.body.location === 'string'
+      ? JSON.parse(req.body.location)
+      : req.body.location;
 
     const event = await Event.create({
       title,
@@ -21,9 +26,17 @@ export const createEvent = async (req: Request, res: Response) => {
       date: new Date(date),
       maxAttendees: Number(maxAttendees),
       image: imageUrl,
+      location: {
+        address: location.address,
+        lat: Number(location.lat),
+        lng: Number(location.lng),
+      },
     });
 
-    res.status(200).json(event);
+    res.status(200).json({
+      success: true,
+      data: event,
+    });
   } catch (error: any) {
     console.error("Create Event Error:", error);
     res.status(500).json({
@@ -34,27 +47,38 @@ export const createEvent = async (req: Request, res: Response) => {
 
 
 
+
 // Update (edit) an existing event
 export const editEvent = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    // Defensive fallback
     if (!req.body || typeof req.body !== "object") {
       return res.status(400).json({ message: "Invalid request body" });
     }
 
     const { title, description, date, maxAttendees, image } = req.body;
+    const location = typeof req.body.location === 'string'
+      ? JSON.parse(req.body.location)
+      : req.body.location;
 
     const event = await Event.findById(id);
     if (!event) return res.status(404).json({ message: "Event not found" });
 
-    // Patch values
+    // Update fields if present
     if (title) event.title = title;
     if (description) event.description = description;
-    if (date) event.date = date;
+    if (date) event.date = new Date(date);
     if (maxAttendees) event.maxAttendees = Number(maxAttendees);
     if (image) event.image = image;
+
+    if (location) {
+      event.location = {
+        address: location.address,
+        lat: Number(location.lat),
+        lng: Number(location.lng),
+      };
+    }
 
     if (req.file) {
       event.image = (req.file as any).path;
@@ -68,6 +92,7 @@ export const editEvent = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Failed to update event' });
   }
 };
+
 
 
 
@@ -113,9 +138,7 @@ export const getEvents = async (req: Request, res: Response) => {
 };
 
 // RSVP to an event
-import User from '../models/user.model';
-import { isValidBase64Image } from '../utils/validate';
-import { getBase64SizeKB } from '../utils/resize';
+
 
 export const rsvpEvent = async (req: AuthRequest, res: Response) => {
   const { id } = req.params;

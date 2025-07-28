@@ -1,5 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import { Attendee } from '../types/event.types';
+import mongoose, { Schema, Document } from "mongoose";
+import { Attendee } from "../types/event.types";
 
 export interface IEvent extends Document {
   title: string;
@@ -8,6 +8,11 @@ export interface IEvent extends Document {
   maxAttendees: number;
   attendees: Attendee[];
   image?: string;
+  location: {
+    address: string;
+    lat?: number;
+    lng?: number;
+  };
 }
 
 const attendeeSchema = new Schema<Attendee>({
@@ -23,6 +28,11 @@ const eventSchema = new Schema<IEvent>({
   maxAttendees: Number,
   attendees: [attendeeSchema],
   image: String,
+  location: {
+    address: { type: String, required: true },
+    lat: { type: Number },
+    lng: { type: Number },
+  },
 });
 
-export default mongoose.model<IEvent>('Event', eventSchema);
+export default mongoose.model<IEvent>("Event", eventSchema);

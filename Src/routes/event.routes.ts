@@ -53,6 +53,10 @@ router.get('/', getEvents);
  *                 format: date-time
  *               maxAttendees:
  *                 type: integer
+ *               location:
+ *                 type: string
+ *                 description: JSON string with address, lat, lng
+ *                 example: '{"address": "Lekki Phase 1", "lat": 6.43, "lng": 3.45}'
  *               image:
  *                 type: string
  *                 format: binary
@@ -90,6 +94,10 @@ router.post('/', upload.single('image'), createEvent);
  *                 format: date-time
  *               maxAttendees:
  *                 type: integer
+ *               location:
+ *                 type: string
+ *                 description: JSON string with address, lat, lng
+ *                 example: '{"address": "Lekki Phase 1", "lat": 6.43, "lng": 3.45}'
  *               image:
  *                 type: string
  *                 format: binary
@@ -97,6 +105,7 @@ router.post('/', upload.single('image'), createEvent);
  *       200:
  *         description: Event updated successfully
  */
+
 router.put('/:id', upload.single('image'), editEvent);
 
 /**
