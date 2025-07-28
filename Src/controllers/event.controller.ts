@@ -6,48 +6,58 @@ import { AuthRequest } from '../middleware/auth';
 // Create a new event
 export const createEvent = async (req: Request, res: Response) => {
   try {
+
     const { title, description, date, maxAttendees } = req.body;
 
-    const imageUrl = (req.file as any)?.path;
+    if (!title || !description || !date || !maxAttendees) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+   const imageUrl = (req.file as any)?.path || null;
 
     const event = await Event.create({
       title,
       description,
-      date,
-      maxAttendees,
+      date: new Date(date),
+      maxAttendees: Number(maxAttendees),
       image: imageUrl,
     });
 
     res.status(200).json(event);
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      res.status(400).json({ message: error.message });
-    } else {
-      res.status(400).json({ message: "Unknown error occurred" });
-    }
+  } catch (error: any) {
+    console.error("Create Event Error:", error);
+    res.status(500).json({
+      message: error.message || "Internal server error",
+    });
   }
 };
 
 
+
 // Update (edit) an existing event
 export const editEvent = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { title, description, date, maxAttendees } = req.body;
-
   try {
+    const { id } = req.params;
+
+    // Defensive fallback
+    if (!req.body || typeof req.body !== "object") {
+      return res.status(400).json({ message: "Invalid request body" });
+    }
+
+    const { title, description, date, maxAttendees, image } = req.body;
+
     const event = await Event.findById(id);
-    if (!event) return res.status(404).json({ message: 'Event not found' });
+    if (!event) return res.status(404).json({ message: "Event not found" });
 
-    // Update fields
-    if (title !== undefined) event.title = title;
-    if (description !== undefined) event.description = description;
-    if (date !== undefined) event.date = date;
-    if (maxAttendees !== undefined) event.maxAttendees = maxAttendees;
+    // Patch values
+    if (title) event.title = title;
+    if (description) event.description = description;
+    if (date) event.date = date;
+    if (maxAttendees) event.maxAttendees = Number(maxAttendees);
+    if (image) event.image = image;
 
-    // Update image if a new one was uploaded
     if (req.file) {
-      const imageUrl = (req.file as any).path;
-      event.image = imageUrl;
+      event.image = (req.file as any).path;
     }
 
     await event.save();
@@ -58,6 +68,7 @@ export const editEvent = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Failed to update event' });
   }
 };
+
 
 
 // Get event by ID

@@ -8,6 +8,7 @@ import {
   getEventById,
 } from '../controllers/event.controller';
 import { protect } from '../middleware/auth';
+import upload from '../utils/upload'; 
 
 const router = express.Router();
 
@@ -39,7 +40,7 @@ router.get('/', getEvents);
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -51,15 +52,15 @@ router.get('/', getEvents);
  *                 type: string
  *                 format: date-time
  *               maxAttendees:
- *                 type: number
+ *                 type: integer
  *               image:
  *                 type: string
- *                 description: Base64 encoded image (data:image/jpeg;base64,...)
+ *                 format: binary
  *     responses:
- *       201:
+ *       200:
  *         description: Event created
  */
-router.post('/', createEvent);
+router.post('/', upload.single('image'), createEvent);
 
 /**
  * @swagger
@@ -74,8 +75,9 @@ router.post('/', createEvent);
  *         schema:
  *           type: string
  *     requestBody:
+ *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -87,15 +89,15 @@ router.post('/', createEvent);
  *                 type: string
  *                 format: date-time
  *               maxAttendees:
- *                 type: number
+ *                 type: integer
  *               image:
  *                 type: string
- *                 description: Base64 encoded image (data:image/jpeg;base64,...)
+ *                 format: binary
  *     responses:
  *       200:
  *         description: Event updated successfully
  */
-router.put('/:id', editEvent);
+router.put('/:id', upload.single('image'), editEvent);
 
 /**
  * @swagger
@@ -135,7 +137,6 @@ router.post('/:id/rsvp', protect, rsvpEvent);
  */
 router.get('/:id/attendees', getAttendees);
 
-// Get a single event by ID
 /**
  * @swagger
  * /api/events/{id}:
