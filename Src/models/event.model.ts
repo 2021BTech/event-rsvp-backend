@@ -1,6 +1,19 @@
 import mongoose, { Schema, Document } from "mongoose";
 import { Attendee } from "../types/event.types";
 
+
+export enum RSVPStatus {
+  GOING = "Going",
+  MAYBE = "Maybe",
+  CANT_GO = "Can't Go"
+}
+
+export interface Rsvp {
+  userId: string;
+  eventId: string;
+  status: RSVPStatus;
+}
+
 export interface IEvent extends Document {
   title: string;
   description: string;
@@ -19,6 +32,12 @@ const attendeeSchema = new Schema<Attendee>({
   name: String,
   email: String,
   timestamp: { type: Date, default: Date.now },
+  status: {
+      type: String,
+      enum: Object.values(RSVPStatus),
+      default: RSVPStatus.GOING,
+    },
+  _id: { type: String, default: () => new mongoose.Types.ObjectId().toString() },
 });
 
 const eventSchema = new Schema<IEvent>({

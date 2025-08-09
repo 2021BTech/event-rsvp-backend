@@ -3,9 +3,11 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.model';
 import { AuthRequest } from '../middleware/auth';
+import { sendEmail } from '../utils/mailer';
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 
+// Register a new user
 export const register = async (req: Request, res: Response) => {
   const { name, email, password, role } = req.body;
 
@@ -13,7 +15,6 @@ export const register = async (req: Request, res: Response) => {
     const exists = await User.findOne({ email });
     if (exists) return res.status(400).json({ message: 'Email already registered' });
 
-    // Optional: Validate the role to prevent invalid values or elevation
     const allowedRoles = ['user', 'admin'];
     const finalRole = allowedRoles.includes(role) ? role : 'user';
 
@@ -21,6 +22,15 @@ export const register = async (req: Request, res: Response) => {
     const user = await User.create({ name, email, password: hashed, role: finalRole });
 
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '1d' });
+
+    // Send welcome email
+    await sendEmail(
+      email,
+      'Welcome to EventFlow RSVP!🎉',
+      `<h3>Hi ${name},</h3>
+       <p>Thanks for registering with us. We're excited to have you onboard!</p>
+       <p><strong>Next Steps:</strong> Visit your dashboard and start RSVPing!</p>`
+    );
 
     res.status(200).json({
       token,
@@ -32,12 +42,15 @@ export const register = async (req: Request, res: Response) => {
       },
     });
   } catch (err) {
+    console.error('Registration error:', err);
     res.status(500).json({ message: 'Registration failed' });
   }
 };
 
 
 
+
+// Login an existing user
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
@@ -65,6 +78,7 @@ export const login = async (req: Request, res: Response) => {
 };
 
 
+// Get current user details
 export const getMe = async (req: AuthRequest, res: Response) => {
   try {
     const user = await User.findById(req.user.id).select('-password');

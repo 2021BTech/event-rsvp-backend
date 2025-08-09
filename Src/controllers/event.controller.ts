@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import Event from '../models/event.model';
 import User from '../models/user.model';
 import { AuthRequest } from '../middleware/auth';
+import mongoose from 'mongoose';
+import { sendEmail } from '../utils/mailer';
 
 
 // Create a new event
@@ -138,34 +140,68 @@ export const getEvents = async (req: Request, res: Response) => {
 };
 
 // RSVP to an event
-
-
 export const rsvpEvent = async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const userId = req.user?.id;
+  const { status } = req.body;
+
+  const allowedStatuses = ["Going", "Maybe", "Can't Go"];
+  if (!allowedStatuses.includes(status)) {
+    return res.status(400).json({ message: "Invalid RSVP status" });
+  }
 
   try {
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     const event = await Event.findById(id);
-    if (!event) return res.status(404).json({ message: 'Event not found' });
+    if (!event) return res.status(404).json({ message: "Event not found" });
 
-    const already = event.attendees.find((a) => a.email === user.email);
-    if (already) return res.status(400).json({ message: 'Already RSVPd' });
+    const existing = event.attendees.find((a) => a.email === user.email);
+    if (existing) return res.status(400).json({ message: "Already RSVPd" });
 
-    if (event.attendees.length >= event.maxAttendees) {
-      return res.status(400).json({ message: 'Event is full' });
+    if (event.attendees.length >= event.maxAttendees && status === "Going") {
+      return res.status(400).json({ message: "Event is full" });
     }
 
-    event.attendees.push({ name: user.name, email: user.email });
+    const attendeeId = status === "Going" ? new mongoose.Types.ObjectId().toString() : undefined;
+
+    const newAttendee = {
+      name: user.name,
+      email: user.email,
+      status,
+      _id: attendeeId, // optional: to match MongoDB format
+    };
+
+    event.attendees.push(newAttendee);
     await event.save();
 
-    res.status(200).json({ message: 'RSVP successful', event });
+    // Build email content
+    const subject = `RSVP Confirmation - ${event.title}`;
+    const html = `
+      <p>Hi ${user.name},</p>
+      <p>You have successfully RSVPd as <strong>${status}</strong> for the event <strong>${event.title}</strong>.</p>
+      ${
+        status === "Going"
+          ? `<p>Your Attendee ID: <strong>${attendeeId}</strong></p>`
+          : ""
+      }
+      <p>Event Date: ${event.date.toDateString()}</p>
+      <p>Location: ${event.location.address}</p>
+      <br/>
+      <p>Thanks,<br/>Event RSVP Team</p>
+    `;
+
+    await sendEmail(user.email, subject, html);
+
+    res.status(200).json({ message: "RSVP successful", event });
   } catch (err) {
-    res.status(500).json({ message: 'RSVP failed' });
+    console.error("RSVP error:", err);
+    res.status(500).json({ message: "RSVP failed" });
   }
 };
+
+
 
 
 
@@ -190,5 +226,55 @@ export const getAttendees = async (req: Request, res: Response) => {
     });
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch attendees' });
+  }
+};
+
+
+//getRsvpStatus
+
+export const getRSVPSummary = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { status } = req.query; // optional filter (e.g., ?status=Going)
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+
+  const allowedStatuses = ["Going", "Maybe", "Can't Go"];
+
+  try {
+    const event = await Event.findById(id);
+    if (!event) return res.status(404).json({ message: "Event not found" });
+
+    let filtered = event.attendees;
+
+    // Optional filter by RSVP status
+    if (status && typeof status === "string") {
+      if (!allowedStatuses.includes(status)) {
+        return res.status(400).json({ message: "Invalid RSVP status" });
+      }
+      filtered = filtered.filter((a) => a.status === status);
+    }
+
+    // Paginate filtered attendees
+    const total = filtered.length;
+    const paginated = filtered.slice((page - 1) * limit, page * limit);
+
+    // Summary counts for all statuses (regardless of filter)
+    const summary = {
+      going: event.attendees.filter((a) => a.status === "Going").length,
+      maybe: event.attendees.filter((a) => a.status === "Maybe").length,
+      cantGo: event.attendees.filter((a) => a.status === "Can't Go").length,
+    };
+
+    res.status(200).json({
+      summary,
+      attendees: paginated,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      statusFilter: status || "All",
+    });
+  } catch (err) {
+    console.error("RSVP Summary error:", err);
+    res.status(500).json({ message: "Failed to get RSVP summary" });
   }
 };

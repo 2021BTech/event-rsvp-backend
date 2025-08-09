@@ -9,6 +9,7 @@ const router = express.Router();
  * /api/register:
  *   post:
  *     summary: Register a new user
+ *     description: Registers a new user and sends a welcome email upon successful registration.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -33,7 +34,7 @@ const router = express.Router();
  *                 enum: [user, admin]
  *     responses:
  *       200:
- *         description: User registered successfully
+ *         description: User registered successfully and welcome email sent
  *         content:
  *           application/json:
  *             schema:
@@ -53,8 +54,11 @@ const router = express.Router();
  *                     role:
  *                       type: string
  *                       enum: [user, admin]
+ *       400:
+ *         description: Email already registered
+ *       500:
+ *         description: Registration failed
  */
-
 router.post('/register', register);
 
 /**
