@@ -203,8 +203,6 @@ export const rsvpEvent = async (req: AuthRequest, res: Response) => {
 
 
 
-
-
 // Get attendees of an event
 export const getAttendees = async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -231,7 +229,6 @@ export const getAttendees = async (req: Request, res: Response) => {
 
 
 //getRsvpStatus
-
 export const getRSVPSummary = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { status } = req.query; // optional filter (e.g., ?status=Going)

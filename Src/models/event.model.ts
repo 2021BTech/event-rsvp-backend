@@ -47,11 +47,11 @@ const eventSchema = new Schema<IEvent>({
   maxAttendees: Number,
   attendees: [attendeeSchema],
   image: String,
-  location: {
-    address: { type: String, required: true },
-    lat: { type: Number },
-    lng: { type: Number },
-  },
+ location: {
+  address: { type: String, required: true, default: "" },
+  lat: { type: Number, default: null },
+  lng: { type: Number, default: null },
+},
 });
 
 export default mongoose.model<IEvent>("Event", eventSchema);
