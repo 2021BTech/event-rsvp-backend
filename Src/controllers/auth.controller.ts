@@ -29,7 +29,7 @@ export const register = async (req: Request, res: Response) => {
       'Welcome to EventFlow RSVP!🎉',
       `<h3>Hi ${name},</h3>
        <p>Thanks for registering with us. We're excited to have you onboard!</p>
-       <p><strong>Next Steps:</strong> Visit your dashboard and start RSVPing!</p>`
+       <p><strong>Next Steps:</strong> You can now start RSVPing!</p>`
     );
 
     res.status(200).json({
